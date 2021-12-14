@@ -76,10 +76,9 @@ impl Display for Grid {
       let mut bottom = "+".to_owned();
 
       for col in 0..self.columns {
-        let cell = self.map[((row * self.rows) + col) as usize].clone();
+        let index = ((row * self.columns) + col) as usize;
+        let cell = self.map[index].clone();
         top = top + "   ";
-        // let coords = format!("{},{}", row, col);
-        // top = top + &coords.to_owned();
         let east = cell.links.get(&(row, col + 1));
         match east {
           Some(_) => top = top + " ",
@@ -91,7 +90,7 @@ impl Display for Grid {
           None => bottom = bottom + "---+",
         }
       }
-      output = output + &top + "\n" + &bottom + "\n";
+      output = output + &format!("{}\n{}\n", &top, &bottom).to_owned();
     }
     write!(f, "{}", output)
   }

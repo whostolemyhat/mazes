@@ -1,39 +1,37 @@
-use rand::prelude::*;
+use std::env;
 
+mod binary_tree;
 mod cell;
 mod grid;
+mod sidewinder;
 
+use binary_tree::BinaryTree;
 use grid::Grid;
+use sidewinder::Sidewinder;
 
-struct BinaryTree {}
-
-impl BinaryTree {
-  fn on(grid: &mut Grid) {
-    for cell in grid.map.iter_mut() {
-      let mut neighbours = vec![];
-      if cell.neighbours.south.is_some() {
-        neighbours.push(cell.neighbours.south);
-      }
-      if cell.neighbours.east.is_some() {
-        neighbours.push(cell.neighbours.east);
-      }
-
-      let mut rng = rand::thread_rng();
-      let neighbour = neighbours.choose(&mut rng);
-
-      // check there are actually neighbours
-      if let Some(neighbour) = neighbour {
-        cell.link(&neighbour.expect("Couldn't get cell neighbour"));
-      }
-    }
-  }
-}
+// tODO fix display so 0,0 is southwest not northwest
+// then update algos to use north not south
 
 fn main() {
-  let mut grid = Grid::new(4, 4);
-  // println!("{:?}", grid);
-  // currently operates on grid in-place
-  let binary_tree = BinaryTree::on(&mut grid);
+  let args: Vec<String> = env::args().collect();
+  if args.len() < 2 {
+    println!("pick an algorithm");
+    return;
+  }
+
+  let mut grid = Grid::new(8, 18);
+  // operates on grid in-place
+  match args[1].as_str() {
+    "binary" => {
+      let _binary_tree = BinaryTree::on(&mut grid);
+    }
+    "sidewinder" => {
+      let _sidewinder = Sidewinder::on(&mut grid);
+    }
+    _ => {
+      println!("Thats not an algo");
+      return;
+    }
+  }
   println!("{}", grid);
-  // println!("{:?}", grid);
 }
