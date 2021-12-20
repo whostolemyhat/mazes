@@ -16,7 +16,6 @@ impl Sidewinder {
       run.push(cell);
 
       if should_close_run {
-        println!("closing");
         let mut rng = rand::thread_rng();
         let selected_index = rng.gen_range(0..run.len());
         let selected = &run[selected_index];
@@ -26,14 +25,12 @@ impl Sidewinder {
             .south
             .expect("Couldn't get neighbour position");
           // using 'selected' here causes mut/ref issues
-          println!("adding south");
           run[selected_index].link(&neighbour_pos);
         }
         run.clear();
       } else {
         let neighbour_pos = eastern_neighbour.expect("Can't get neighbour pos");
         let last_index = run.len() - 1;
-        println!("adding east");
         // as above, operating on cell directly is a no-no
         run[last_index].link(&neighbour_pos);
       }

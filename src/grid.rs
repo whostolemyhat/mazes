@@ -1,7 +1,8 @@
+use crate::cell::Cell;
+use cairo::{Context, Format, ImageSurface};
 use rand::prelude::*;
 use std::fmt::{self, Display, Formatter};
-
-use crate::cell::Cell;
+use std::fs::File;
 
 #[derive(Debug)]
 pub struct Grid {
@@ -60,6 +61,70 @@ impl Grid {
 
   fn size(&self) -> i32 {
     self.rows * self.columns
+  }
+
+  pub fn to_image(&self, cell_size: i32) {
+    let img_width = cell_size * self.columns;
+    let img_height = cell_size * self.rows;
+
+    let surface = ImageSurface::create(Format::ARgb32, img_width + 20, img_height + 20)
+      .expect("Couldn't create surface");
+    let context = Context::new(&surface).expect("Failed to create context");
+    let offset: f64 = 10.0;
+    // background
+    context.set_source_rgb(1.0, 1.0, 1.0);
+    context.rectangle(
+      0.,
+      0.,
+      img_width as f64 + (offset * 2.0),
+      img_height as f64 + (offset * 2.0),
+    );
+    context.fill().ok();
+
+    for cell in &self.map {
+      let x1: f64 = (cell.column * cell_size) as f64 + offset;
+      let x2: f64 = ((cell.column + 1) * cell_size) as f64 + offset;
+      let y1: f64 = (cell.row * cell_size) as f64 + offset;
+      let y2: f64 = ((cell.row + 1) * cell_size) as f64 + offset;
+
+      let cell_pos = cell.position();
+
+      context.new_path();
+      context.move_to(x1, y1);
+
+      if cell.neighbours.north.is_some() {
+        context.move_to(x2, y1);
+      } else {
+        context.line_to(x2, y1);
+      }
+      if cell.is_linked((cell_pos.0, cell_pos.1 + 1)) {
+        context.move_to(x2, y2);
+      } else {
+        context.line_to(x2, y2);
+      }
+      if cell.is_linked((cell_pos.0 + 1, cell_pos.1)) {
+        context.move_to(x1, y2)
+      } else {
+        context.line_to(x1, y2);
+      }
+
+      // only draw west for outer walls
+      if cell.neighbours.west.is_some() {
+        context.move_to(x1, y1);
+      } else {
+        context.line_to(x1, y1);
+      }
+
+      let line_colour = (0.1, 0.1, 0.0);
+      context.set_line_width(2.0);
+      context.set_source_rgb(line_colour.0, line_colour.1, line_colour.1);
+      context.stroke().expect("Failed to draw");
+    }
+
+    let mut file = File::create("maze.png").expect("Can't create file for some reason");
+    surface
+      .write_to_png(&mut file)
+      .expect("Failed to draw image");
   }
 }
 

@@ -28,7 +28,7 @@ impl Cell {
     }
   }
 
-  fn position(&self) -> Position {
+  pub fn position(&self) -> Position {
     (self.row, self.column)
   }
 
@@ -43,7 +43,7 @@ impl Cell {
 
   // fn links() {}
 
-  fn is_linked(&self, pos: Position) -> bool {
+  pub fn is_linked(&self, pos: Position) -> bool {
     self.links.contains_key(&pos)
   }
 }

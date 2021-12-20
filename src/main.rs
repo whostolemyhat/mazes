@@ -34,4 +34,5 @@ fn main() {
     }
   }
   println!("{}", grid);
+  grid.to_image(50);
 }
