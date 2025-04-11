@@ -1,49 +1,50 @@
 use std::collections::HashMap;
 
-pub type Position = (i32, i32);
+use crate::{Direction, Position};
 
-#[derive(Clone, Default, Debug)]
-pub struct Neighbours {
-  pub north: Option<Position>,
-  pub south: Option<Position>,
-  pub east: Option<Position>,
-  pub west: Option<Position>,
-}
-
-#[derive(Clone, Debug)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub struct Cell {
-  pub row: i32,
-  pub column: i32,
-  pub links: HashMap<Position, bool>,
-  pub neighbours: Neighbours,
+    pub position: Position,
+    pub neighbours: HashMap<Direction, Position>,
+    pub links: HashMap<Position, bool>,
 }
 
 impl Cell {
-  pub fn new(row: i32, column: i32) -> Self {
-    Cell {
-      row,
-      column,
-      links: HashMap::new(),
-      neighbours: Default::default(),
+    pub fn new(x: i32, y: i32) -> Self {
+        Cell {
+            position: Position { x, y },
+            neighbours: HashMap::new(),
+            links: HashMap::new(),
+        }
     }
-  }
 
-  pub fn position(&self) -> Position {
-    (self.row, self.column)
-  }
+    // pub fn link(&mut self, cell: &mut Cell, bidirectional: bool) {
+    //     self.links.insert(cell.position, true);
+    //     if bidirectional {
+    //         cell.link(self, false);
+    //     }
+    // }
 
-  // removed bi-directional stuff
-  pub fn link(&mut self, cell_pos: &Position) {
-    self.links.insert(*cell_pos, true);
-  }
+    // pub fn unlink(&mut self, cell: &mut Cell, bidirectional: bool) {
+    //     self.links.remove(&cell.position);
 
-  fn unlink(&mut self, cell_pos: &Position) {
-    self.links.remove(&cell_pos);
-  }
+    //     if bidirectional {
+    //         cell.unlink(self, false);
+    //     }
+    // }
+    pub fn link(&mut self, cell_pos: &Position) {
+        self.links.insert(*cell_pos, true);
+    }
 
-  // fn links() {}
+    pub fn unlink(&mut self, cell_pos: &Position) {
+        self.links.remove(cell_pos);
+    }
 
-  pub fn is_linked(&self, pos: Position) -> bool {
-    self.links.contains_key(&pos)
-  }
+    pub fn is_linked(&self, cell: &Cell) -> bool {
+        self.links.contains_key(&cell.position)
+    }
+
+    pub fn get_neighbours(&self) -> Vec<&Position> {
+        self.neighbours.values().collect()
+    }
 }

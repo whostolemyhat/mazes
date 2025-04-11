@@ -1,162 +1,312 @@
-use crate::cell::Cell;
-use cairo::{Context, Format, ImageSurface};
-use rand::prelude::*;
 use std::fmt::{self, Display, Formatter};
-use std::fs::File;
 
-#[derive(Debug)]
+use rand::Rng;
+
+use crate::{Direction, Position, cell::Cell};
+
+#[derive(Debug, Eq, PartialEq)]
 pub struct Grid {
-  rows: i32,
-  columns: i32,
-  pub map: Vec<Cell>,
+    pub map: Vec<Cell>,
+    pub width: i32,
+    pub height: i32,
 }
 
 impl Grid {
-  pub fn new(rows: i32, columns: i32) -> Self {
-    let mut map = Grid::prepare_grid(rows, columns);
-    Grid::configure_cells(&mut map, rows, columns);
-    let grid = Grid { rows, columns, map };
-    grid
-  }
-
-  fn prepare_grid(rows: i32, columns: i32) -> Vec<Cell> {
-    let mut grid = vec![];
-    for i in 0..rows {
-      for j in 0..columns {
-        grid.push(Cell::new(i, j));
-      }
+    pub fn new(width: i32, height: i32) -> Self {
+        let mut map = Grid::prepare_map(width, height);
+        Grid::configure_cells(&mut map, width, height);
+        Grid { map, width, height }
     }
 
-    grid
-  }
+    pub fn random_cell(&self) -> Cell {
+        let mut rng = rand::rng();
+        let y = rng.random_range(0..self.height);
+        let x = rng.random_range(0..self.width);
 
-  fn configure_cells(map: &mut Vec<Cell>, rows: i32, columns: i32) {
-    for cell in map.iter_mut() {
-      let row = cell.row;
-      let column = cell.column;
-
-      if row > 0 {
-        cell.neighbours.north = Some((row - 1, column));
-      }
-
-      // tODO check this
-      if row < rows - 1 {
-        cell.neighbours.south = Some((row + 1, column));
-      }
-
-      if column < columns - 1 {
-        cell.neighbours.east = Some((row, column + 1));
-      }
-
-      if column > 0 {
-        cell.neighbours.west = Some((row, column - 1));
-      }
-    }
-  }
-
-  pub fn random_cell(&self) -> Option<&Cell> {
-    let mut rng = rand::thread_rng();
-    self.map.choose(&mut rng)
-  }
-
-  fn size(&self) -> i32 {
-    self.rows * self.columns
-  }
-
-  pub fn to_image(&self, cell_size: i32) {
-    let img_width = cell_size * self.columns;
-    let img_height = cell_size * self.rows;
-
-    let surface = ImageSurface::create(Format::ARgb32, img_width + 20, img_height + 20)
-      .expect("Couldn't create surface");
-    let context = Context::new(&surface).expect("Failed to create context");
-    let offset: f64 = 10.0;
-    // background
-    context.set_source_rgb(1.0, 1.0, 1.0);
-    context.rectangle(
-      0.,
-      0.,
-      img_width as f64 + (offset * 2.0),
-      img_height as f64 + (offset * 2.0),
-    );
-    context.fill().ok();
-
-    for cell in &self.map {
-      let x1: f64 = (cell.column * cell_size) as f64 + offset;
-      let x2: f64 = ((cell.column + 1) * cell_size) as f64 + offset;
-      let y1: f64 = (cell.row * cell_size) as f64 + offset;
-      let y2: f64 = ((cell.row + 1) * cell_size) as f64 + offset;
-
-      let cell_pos = cell.position();
-
-      context.new_path();
-      context.move_to(x1, y1);
-
-      if cell.neighbours.north.is_some() {
-        context.move_to(x2, y1);
-      } else {
-        context.line_to(x2, y1);
-      }
-      if cell.is_linked((cell_pos.0, cell_pos.1 + 1)) {
-        context.move_to(x2, y2);
-      } else {
-        context.line_to(x2, y2);
-      }
-      if cell.is_linked((cell_pos.0 + 1, cell_pos.1)) {
-        context.move_to(x1, y2)
-      } else {
-        context.line_to(x1, y2);
-      }
-
-      // only draw west for outer walls
-      if cell.neighbours.west.is_some() {
-        context.move_to(x1, y1);
-      } else {
-        context.line_to(x1, y1);
-      }
-
-      let line_colour = (0.1, 0.1, 0.0);
-      context.set_line_width(2.0);
-      context.set_source_rgb(line_colour.0, line_colour.1, line_colour.1);
-      context.stroke().expect("Failed to draw");
+        self.map[((y * self.width) + x) as usize].clone()
     }
 
-    let mut file = File::create("maze.png").expect("Can't create file for some reason");
-    surface
-      .write_to_png(&mut file)
-      .expect("Failed to draw image");
-  }
+    pub fn size(&self) -> i32 {
+        self.width * self.height
+    }
+}
+
+// separate so can be overridden for different types of grid
+trait GridSetup {
+    fn prepare_map(width: i32, height: i32) -> Vec<Cell>;
+    fn configure_cells(map: &mut Vec<Cell>, width: i32, height: i32);
+}
+
+impl GridSetup for Grid {
+    fn prepare_map(width: i32, height: i32) -> Vec<Cell> {
+        let mut map = vec![];
+        for y in 0..height {
+            for x in 0..width {
+                map.push(Cell::new(x, y))
+            }
+        }
+        map
+    }
+
+    fn configure_cells(map: &mut Vec<Cell>, width: i32, height: i32) {
+        for cell in map.iter_mut() {
+            let row = cell.position.y;
+            let col = cell.position.x;
+
+            if row > 0 {
+                cell.neighbours
+                    .insert(Direction::North, Position { x: row - 1, y: col });
+            }
+
+            if row < height - 1 {
+                cell.neighbours
+                    .insert(Direction::South, Position { x: row + 1, y: col });
+            }
+
+            if col > 0 {
+                cell.neighbours
+                    .insert(Direction::West, Position { x: row, y: col - 1 });
+            }
+            if col < width - 1 {
+                cell.neighbours
+                    .insert(Direction::East, Position { x: row, y: col + 1 });
+            }
+        }
+    }
 }
 
 impl Display for Grid {
-  fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-    let mut output: String = "+".to_owned();
-    for _ in 0..self.columns {
-      output = output + "---+"
-    }
-    output = output + "\n";
-
-    for row in 0..self.rows {
-      let mut top = "|".to_owned();
-      let mut bottom = "+".to_owned();
-
-      for col in 0..self.columns {
-        let index = ((row * self.columns) + col) as usize;
-        let cell = self.map[index].clone();
-        top = top + "   ";
-        let east = cell.links.get(&(row, col + 1));
-        match east {
-          Some(_) => top = top + " ",
-          None => top += "|",
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        let mut output: String = "+".to_owned();
+        for _ in 0..self.width {
+            output = output + "---+"
         }
-        let south = cell.links.get(&(row + 1, col));
-        match south {
-          Some(_) => bottom = bottom + "   +",
-          None => bottom = bottom + "---+",
+        output = output + "\n";
+
+        for row in 0..self.height {
+            let mut top = "|".to_owned();
+            let mut bottom = "+".to_owned();
+
+            for col in 0..self.width {
+                let index = ((row * self.width) + col) as usize;
+                let cell = self.map[index].clone();
+                top = top + "   ";
+                let east = cell.links.get(&Position { x: row, y: col + 1 });
+                match east {
+                    Some(_) => top = top + " ",
+                    None => top += "|",
+                }
+                let south = cell.links.get(&Position { x: row + 1, y: col });
+                match south {
+                    Some(_) => bottom = bottom + "   +",
+                    None => bottom = bottom + "---+",
+                }
+            }
+            output = output + &format!("{}\n{}\n", &top, &bottom).to_owned();
         }
-      }
-      output = output + &format!("{}\n{}\n", &top, &bottom).to_owned();
+        write!(f, "{}", output)
     }
-    write!(f, "{}", output)
-  }
+}
+
+#[cfg(test)]
+mod test {
+    use std::collections::HashMap;
+
+    use crate::{Direction, Grid, Position, cell::Cell};
+
+    #[test]
+    fn it_should_create_grid() {
+        let grid = Grid::new(4, 4);
+        assert_eq!(
+            grid,
+            Grid {
+                width: 4,
+                height: 4,
+                map: vec![
+                    Cell {
+                        position: Position { x: 0, y: 0 },
+                        neighbours: HashMap::from([
+                            (Direction::East, Position { x: 0, y: 1 }),
+                            (Direction::South, Position { x: 1, y: 0 })
+                        ]),
+                        links: HashMap::new()
+                    },
+                    Cell {
+                        position: Position { x: 1, y: 0 },
+                        neighbours: HashMap::from([
+                            (Direction::South, Position { x: 1, y: 1 }),
+                            (Direction::West, Position { x: 0, y: 0 }),
+                            (Direction::East, Position { x: 0, y: 2 })
+                        ]),
+                        links: HashMap::new()
+                    },
+                    Cell {
+                        position: Position { x: 2, y: 0 },
+                        neighbours: HashMap::from([
+                            (Direction::West, Position { x: 0, y: 1 }),
+                            (Direction::East, Position { x: 0, y: 3 }),
+                            (Direction::South, Position { x: 1, y: 2 })
+                        ]),
+                        links: HashMap::new()
+                    },
+                    Cell {
+                        position: Position { x: 3, y: 0 },
+                        neighbours: HashMap::from([
+                            (Direction::South, Position { x: 1, y: 3 }),
+                            (Direction::West, Position { x: 0, y: 2 })
+                        ]),
+                        links: HashMap::new()
+                    },
+                    Cell {
+                        position: Position { x: 0, y: 1 },
+                        neighbours: HashMap::from([
+                            (Direction::South, Position { x: 2, y: 0 }),
+                            (Direction::East, Position { x: 1, y: 1 }),
+                            (Direction::North, Position { x: 0, y: 0 })
+                        ]),
+                        links: HashMap::new()
+                    },
+                    Cell {
+                        position: Position { x: 1, y: 1 },
+                        neighbours: HashMap::from([
+                            (Direction::South, Position { x: 2, y: 1 }),
+                            (Direction::East, Position { x: 1, y: 2 }),
+                            (Direction::North, Position { x: 0, y: 1 }),
+                            (Direction::West, Position { x: 1, y: 0 })
+                        ]),
+                        links: HashMap::new()
+                    },
+                    Cell {
+                        position: Position { x: 2, y: 1 },
+                        neighbours: HashMap::from([
+                            (Direction::South, Position { x: 2, y: 2 }),
+                            (Direction::North, Position { x: 0, y: 2 }),
+                            (Direction::West, Position { x: 1, y: 1 }),
+                            (Direction::East, Position { x: 1, y: 3 })
+                        ]),
+                        links: HashMap::new()
+                    },
+                    Cell {
+                        position: Position { x: 3, y: 1 },
+                        neighbours: HashMap::from([
+                            (Direction::North, Position { x: 0, y: 3 }),
+                            (Direction::South, Position { x: 2, y: 3 }),
+                            (Direction::West, Position { x: 1, y: 2 })
+                        ]),
+                        links: HashMap::new()
+                    },
+                    Cell {
+                        position: Position { x: 0, y: 2 },
+                        neighbours: HashMap::from([
+                            (Direction::South, Position { x: 3, y: 0 }),
+                            (Direction::East, Position { x: 2, y: 1 }),
+                            (Direction::North, Position { x: 1, y: 0 })
+                        ]),
+                        links: HashMap::new()
+                    },
+                    Cell {
+                        position: Position { x: 1, y: 2 },
+                        neighbours: HashMap::from([
+                            (Direction::East, Position { x: 2, y: 2 }),
+                            (Direction::West, Position { x: 2, y: 0 }),
+                            (Direction::North, Position { x: 1, y: 1 }),
+                            (Direction::South, Position { x: 3, y: 1 })
+                        ]),
+                        links: HashMap::new()
+                    },
+                    Cell {
+                        position: Position { x: 2, y: 2 },
+                        neighbours: HashMap::from([
+                            (Direction::East, Position { x: 2, y: 3 }),
+                            (Direction::North, Position { x: 1, y: 2 }),
+                            (Direction::South, Position { x: 3, y: 2 }),
+                            (Direction::West, Position { x: 2, y: 1 }),
+                        ]),
+                        links: HashMap::new()
+                    },
+                    Cell {
+                        position: Position { x: 3, y: 2 },
+                        neighbours: HashMap::from([
+                            (Direction::West, Position { x: 2, y: 2 }),
+                            (Direction::North, Position { x: 1, y: 3 }),
+                            (Direction::South, Position { x: 3, y: 3 }),
+                        ]),
+                        links: HashMap::new()
+                    },
+                    Cell {
+                        position: Position { x: 0, y: 3 },
+                        neighbours: HashMap::from([
+                            (Direction::North, Position { x: 2, y: 0 }),
+                            (Direction::East, Position { x: 3, y: 1 }),
+                        ]),
+                        links: HashMap::new()
+                    },
+                    Cell {
+                        position: Position { x: 1, y: 3 },
+                        neighbours: HashMap::from([
+                            (Direction::North, Position { x: 2, y: 1 }),
+                            (Direction::West, Position { x: 3, y: 0 }),
+                            (Direction::East, Position { x: 3, y: 2 }),
+                        ]),
+                        links: HashMap::new()
+                    },
+                    Cell {
+                        position: Position { x: 2, y: 3 },
+                        neighbours: HashMap::from([
+                            (Direction::West, Position { x: 3, y: 1 }),
+                            (Direction::East, Position { x: 3, y: 3 }),
+                            (Direction::North, Position { x: 2, y: 2 }),
+                        ]),
+                        links: HashMap::new()
+                    },
+                    Cell {
+                        position: Position { x: 3, y: 3 },
+                        neighbours: HashMap::from([
+                            (Direction::West, Position { x: 3, y: 2 }),
+                            (Direction::North, Position { x: 2, y: 3 })
+                        ]),
+                        links: HashMap::new()
+                    }
+                ]
+            }
+        );
+    }
+
+    #[test]
+    fn it_should_display_ascii() {
+        let mut grid = Grid::new(4, 4);
+        assert_eq!(
+            format!("{}", grid),
+            "+---+---+---+---+
+|   |   |   |   |
++---+---+---+---+
+|   |   |   |   |
++---+---+---+---+
+|   |   |   |   |
++---+---+---+---+
+|   |   |   |   |
++---+---+---+---+
+"
+        );
+
+        let next_cell_pos = grid.map[2].position;
+        // TODO use pos + index?
+        // let mut next_cell = grid.map[2];
+        // grid.map[2].link(&mut next_cell, true);
+        grid.map[1].links.insert(next_cell_pos, true);
+
+        assert_eq!(
+            format!("{}", grid),
+            "+---+---+---+---+
+|   |       |   |
++---+---+---+---+
+|   |   |   |   |
++---+---+---+---+
+|   |   |   |   |
++---+---+---+---+
+|   |   |   |   |
++---+---+---+---+
+"
+        );
+    }
 }
