@@ -18,20 +18,6 @@ impl Cell {
         }
     }
 
-    // pub fn link(&mut self, cell: &mut Cell, bidirectional: bool) {
-    //     self.links.insert(cell.position, true);
-    //     if bidirectional {
-    //         cell.link(self, false);
-    //     }
-    // }
-
-    // pub fn unlink(&mut self, cell: &mut Cell, bidirectional: bool) {
-    //     self.links.remove(&cell.position);
-
-    //     if bidirectional {
-    //         cell.unlink(self, false);
-    //     }
-    // }
     pub fn link(&mut self, cell_pos: &Position) {
         self.links.insert(*cell_pos, true);
     }
@@ -40,8 +26,8 @@ impl Cell {
         self.links.remove(cell_pos);
     }
 
-    pub fn is_linked(&self, cell: &Cell) -> bool {
-        self.links.contains_key(&cell.position)
+    pub fn is_linked(&self, pos: &Position) -> bool {
+        self.links.contains_key(pos)
     }
 
     pub fn get_neighbours(&self) -> Vec<&Position> {

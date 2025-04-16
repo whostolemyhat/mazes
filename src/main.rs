@@ -1,6 +1,11 @@
-use grid::Grid;
-use rand::{Rng, seq::IndexedRandom};
+use std::{fs::write, io};
 
+use algos::{binary_tree::binary_tree, sidewinder::sidewinder};
+use grid::Grid;
+use rand::rngs::SmallRng;
+use rand_seeder::Seeder;
+
+mod algos;
 mod cell;
 mod grid;
 
@@ -18,53 +23,24 @@ enum Direction {
     West,
 }
 
-// carve south or east, starting at top left
-fn binary_tree(grid: &mut Grid) {
-    let mut rng = rand::rng();
+fn main() -> Result<(), io::Error> {
+    let mut args = std::env::args();
+    let seed = "abc12345abc";
+    let mut rng: SmallRng = Seeder::from(&seed).into_rng();
 
-    grid.map.iter_mut().for_each(|cell| {
-        let mut neighbours = vec![];
-        if cell.neighbours.get(&Direction::South).is_some() {
-            neighbours.push(
-                cell.neighbours
-                    .get(&Direction::South)
-                    .expect("Couldn't get south neighbour")
-                    .clone(),
-            );
-        }
-        if cell.neighbours.get(&Direction::East).is_some() {
-            neighbours.push(
-                cell.neighbours
-                    .get(&Direction::East)
-                    .expect("Couldn't get east neighbour")
-                    .clone(),
-            );
-        }
+    let mut grid = Grid::new(8, 8);
 
-        if neighbours.len() > 0 {
-            let neighbour = neighbours
-                .choose(&mut rng)
-                .expect("Couldn't pick neighbour");
+    let algo: &str = &args.nth(1).unwrap_or("binary".to_string());
 
-            cell.link(&neighbour);
-        }
-    });
+    match algo {
+        "sidewinder" => sidewinder(&mut grid, &mut rng),
+        _ => binary_tree(&mut grid, &mut rng),
+    };
 
-    // // start bottom left
-    // let start = Position {
-    //     x: grid.width - 1,
-    //     y: grid.height - 1,
-    // };
-
-    // let direction = if rng.random_bool(0.5) {
-    //     Direction::North
-    // } else {
-    //     Direction::East
-    // };
-}
-
-fn main() {
-    let mut grid = Grid::new(4, 4);
-    binary_tree(&mut grid);
     println!("{}", grid);
+
+    let output = grid.draw();
+    write("./test.svg", output)?;
+
+    Ok(())
 }
