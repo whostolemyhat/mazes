@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use crate::{Direction, Position};
 
@@ -6,7 +6,7 @@ use crate::{Direction, Position};
 pub struct Cell {
     pub position: Position,
     pub neighbours: HashMap<Direction, Position>,
-    pub links: HashMap<Position, bool>,
+    // pub links: HashSet<Position>,
 }
 
 impl Cell {
@@ -14,21 +14,22 @@ impl Cell {
         Cell {
             position: Position { x, y },
             neighbours: HashMap::new(),
-            links: HashMap::new(),
+            // links: HashSet::new(),
         }
     }
 
-    pub fn link(&mut self, cell_pos: &Position) {
-        self.links.insert(*cell_pos, true);
-    }
+    // TODO link bi-directional
+    // pub fn link(&mut self, cell_pos: &Position) {
+    //     self.links.insert(*cell_pos);
+    // }
 
-    pub fn unlink(&mut self, cell_pos: &Position) {
-        self.links.remove(cell_pos);
-    }
+    // pub fn unlink(&mut self, cell_pos: &Position) {
+    //     self.links.remove(cell_pos);
+    // }
 
-    pub fn is_linked(&self, pos: &Position) -> bool {
-        self.links.contains_key(pos)
-    }
+    // pub fn is_linked(&self, pos: &Position) -> bool {
+    //     self.links.contains(pos)
+    // }
 
     pub fn get_neighbours(&self) -> Vec<&Position> {
         self.neighbours.values().collect()

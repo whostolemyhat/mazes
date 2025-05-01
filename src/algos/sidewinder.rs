@@ -1,9 +1,22 @@
-use crate::{Direction, grid::Grid};
+use std::collections::HashMap;
+
+use crate::grid::Grid;
+use crate::{Direction, Position};
 use rand::rngs::SmallRng;
 use rand::{Rng, seq::IndexedMutRandom};
 
+fn link(links: &mut HashMap<Position, Vec<Position>>, start: &Position, neighbour: &Position) {
+    links.entry(*start).or_insert(vec![]).push(*neighbour);
+}
+
 pub fn sidewinder(grid: &mut Grid, rng: &mut SmallRng) {
-    grid.map.iter_mut().for_each(|cell| {
+    // can't borrow links field inside for loop since Rust doesn't know which field
+    // we're mutating
+    // so take links here, update in loop, then reassign
+    // https://stackoverflow.com/a/64921799
+    let mut links = std::mem::take(&mut grid.links);
+
+    grid.map.iter().for_each(|cell| {
         let mut run = vec![];
         let cell_clone = cell.clone();
         let eastern_neighbour = cell_clone.neighbours.get(&Direction::East);
@@ -17,15 +30,22 @@ pub fn sidewinder(grid: &mut Grid, rng: &mut SmallRng) {
             let chosen = run.choose_mut(rng).expect("Failed to pick from run");
             let southern_neighbour = chosen.neighbours.get(&Direction::South);
             if let Some(southern_neighbour) = southern_neighbour {
-                chosen.link(&southern_neighbour.clone());
+                // grid.link(&chosen.position, &southern_neighbour.clone());
+                link(&mut links, &chosen.position, &southern_neighbour.clone());
             }
 
             run.clear();
         } else if eastern_neighbour.is_some() {
             let index = run.len() - 1;
-            run[index].link(eastern_neighbour.expect("Couldn't get south pos"));
+            link(
+                &mut links,
+                &run[index].position,
+                eastern_neighbour.expect("Couldn't get south pos"),
+            );
         }
     });
+
+    grid.links = links;
 }
 
 #[cfg(test)]
@@ -33,17 +53,41 @@ mod test {
     use rand::rngs::SmallRng;
     use rand_seeder::Seeder;
 
-    use crate::{algos::sidewinder::sidewinder, grid::Grid};
+    use crate::{algos::sidewinder::sidewinder, grid::StandardGrid};
+
+    #[test]
+    fn debug() {
+        let seed = "abc12345abc";
+        let mut rng: SmallRng = Seeder::from(&seed).into_rng();
+        let mut container = StandardGrid::new(3, 3);
+        sidewinder(&mut container.grid, &mut rng);
+
+        dbg!(&container.grid);
+
+        assert_eq!(
+            format!("{}", container.grid),
+            "+---+---+---+---+
+|               |
++---+---+---+   +
+|   |   |   |   |
++   +   +   +   +
+|   |   |       |
++   +   +---+   +
+|               |
++---+---+---+---+
+"
+        );
+    }
 
     #[test]
     fn should_generate_maze() {
         let seed = "abc12345abc";
         let mut rng: SmallRng = Seeder::from(&seed).into_rng();
-        let mut grid = Grid::new(4, 4);
-        sidewinder(&mut grid, &mut rng);
+        let mut container = StandardGrid::new(4, 4);
+        sidewinder(&mut container.grid, &mut rng);
 
         assert_eq!(
-            format!("{}", grid),
+            format!("{}", container.grid),
             "+---+---+---+---+
 |               |
 +---+---+---+   +
