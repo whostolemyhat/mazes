@@ -1,7 +1,3 @@
-use std::{cell::RefCell, collections::HashMap};
-
-use rand::Rng;
-
 use crate::{Direction, Position, cell::Cell, grid::Grid};
 
 // TODO grid owns links

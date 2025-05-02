@@ -45,8 +45,13 @@ fn main() -> Result<(), io::Error> {
 
     println!("{}", grid.grid);
 
-    // let output = grid.draw();
-    // write("./test.svg", output)?;
+    let output = DjikstraGrid::draw(
+        &grid.grid,
+        &grid.grid.map,
+        grid.grid.width,
+        grid.grid.height,
+    );
+    write("./test.svg", output)?;
 
     Ok(())
 }

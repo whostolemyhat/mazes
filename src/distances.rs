@@ -2,7 +2,6 @@ use std::{collections::HashMap, vec};
 
 use crate::{Position, grid::Grid};
 
-// TODO use links in grid
 pub fn distances(root: &Position, grid: &Grid) -> HashMap<Position, i32> {
     let mut distances = HashMap::new();
     distances.insert(*root, 0);
@@ -12,9 +11,9 @@ pub fn distances(root: &Position, grid: &Grid) -> HashMap<Position, i32> {
         let mut new_frontier = vec![];
 
         for pos in frontier {
-            for (_, links) in grid.links.iter() {
-                // get vec
-                for link in links {
+            // get vec from pos
+            if let Some(cell_links) = grid.links.get(&pos) {
+                for link in cell_links {
                     if distances.contains_key(&link) {
                         break;
                     }

@@ -56,30 +56,6 @@ mod test {
     use crate::{algos::sidewinder::sidewinder, grid::StandardGrid};
 
     #[test]
-    fn debug() {
-        let seed = "abc12345abc";
-        let mut rng: SmallRng = Seeder::from(&seed).into_rng();
-        let mut container = StandardGrid::new(3, 3);
-        sidewinder(&mut container.grid, &mut rng);
-
-        dbg!(&container.grid);
-
-        assert_eq!(
-            format!("{}", container.grid),
-            "+---+---+---+---+
-|               |
-+---+---+---+   +
-|   |   |   |   |
-+   +   +   +   +
-|   |   |       |
-+   +   +---+   +
-|               |
-+---+---+---+---+
-"
-        );
-    }
-
-    #[test]
     fn should_generate_maze() {
         let seed = "abc12345abc";
         let mut rng: SmallRng = Seeder::from(&seed).into_rng();
