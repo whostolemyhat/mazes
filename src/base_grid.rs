@@ -32,7 +32,7 @@ use crate::{Direction, Position, cell::Cell, grid::Grid};
 // }
 
 pub trait Svg {
-    fn draw(grid: &Grid, map: &Vec<Cell>, width: i32, height: i32) -> String {
+    fn draw(grid: &dyn Grid, map: &Vec<Cell>, width: i32, height: i32) -> String {
         let wall_colour = "black";
         let cell_size = 16;
         let mut output = String::new();

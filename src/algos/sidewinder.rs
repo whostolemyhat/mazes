@@ -9,14 +9,14 @@ fn link(links: &mut HashMap<Position, Vec<Position>>, start: &Position, neighbou
     links.entry(*start).or_insert(vec![]).push(*neighbour);
 }
 
-pub fn sidewinder(grid: &mut Grid, rng: &mut SmallRng) {
+pub fn sidewinder(grid: &mut dyn Grid, rng: &mut SmallRng) {
     // can't borrow links field inside for loop since Rust doesn't know which field
     // we're mutating
     // so take links here, update in loop, then reassign
     // https://stackoverflow.com/a/64921799
-    let mut links = std::mem::take(&mut grid.links);
+    let mut links = grid.links().clone();
 
-    grid.map.iter().for_each(|cell| {
+    grid.map().iter().for_each(|cell| {
         let mut run = vec![];
         let cell_clone = cell.clone();
         let eastern_neighbour = cell_clone.neighbours.get(&Direction::East);
@@ -45,7 +45,7 @@ pub fn sidewinder(grid: &mut Grid, rng: &mut SmallRng) {
         }
     });
 
-    grid.links = links;
+    grid.set_links(links);
 }
 
 #[cfg(test)]
@@ -60,10 +60,10 @@ mod test {
         let seed = "abc12345abc";
         let mut rng: SmallRng = Seeder::from(&seed).into_rng();
         let mut container = StandardGrid::new(4, 4);
-        sidewinder(&mut container.grid, &mut rng);
+        sidewinder(&mut container, &mut rng);
 
         assert_eq!(
-            format!("{}", container.grid),
+            format!("{}", container),
             "+---+---+---+---+
 |               |
 +---+---+---+   +

@@ -2,7 +2,7 @@ use std::{collections::HashMap, vec};
 
 use crate::{Position, grid::Grid};
 
-pub fn distances(root: &Position, grid: &Grid) -> HashMap<Position, i32> {
+pub fn distances(root: &Position, grid: &dyn Grid) -> HashMap<Position, i32> {
     let mut distances = HashMap::new();
     distances.insert(*root, 0);
     let mut frontier = vec![root];
@@ -12,12 +12,11 @@ pub fn distances(root: &Position, grid: &Grid) -> HashMap<Position, i32> {
 
         for pos in frontier {
             // get vec from pos
-            if let Some(cell_links) = grid.links.get(&pos) {
+            if let Some(cell_links) = grid.links().get(&pos) {
                 for link in cell_links {
                     if distances.contains_key(&link) {
                         break;
                     }
-                    dbg!(&distances, link, pos);
                     distances.insert(*link, distances[&pos] + 1);
                     new_frontier.push(link);
                 }
@@ -63,9 +62,9 @@ mod test {
         let mut grid = StandardGrid::new(4, 4);
         let seed = "abc12345abc";
         let mut rng: SmallRng = Seeder::from(&seed).into_rng();
-        sidewinder(&mut grid.grid, &mut rng);
+        sidewinder(&mut grid, &mut rng);
 
-        let distances = distances(&grid.grid.map[0].position, &grid.grid);
+        let distances = distances(&grid.map[0].position, &grid);
 
         let expected = HashMap::from([
             (Position { x: 3, y: 0 }, 3),
