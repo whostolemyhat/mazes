@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 use crate::{Direction, Position};
 
@@ -31,7 +31,7 @@ impl Cell {
     //     self.links.contains(pos)
     // }
 
-    pub fn get_neighbours(&self) -> Vec<&Position> {
+    pub fn _get_neighbours(&self) -> Vec<&Position> {
         self.neighbours.values().collect()
     }
 }

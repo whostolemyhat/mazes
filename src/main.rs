@@ -3,7 +3,7 @@ use std::{fs::write, io};
 use algos::{binary_tree::binary_tree, sidewinder::sidewinder};
 use base_grid::Svg;
 use djikstra::DjikstraGrid;
-use grid::{Grid, StandardGrid};
+use grid::StandardGrid;
 use rand::rngs::SmallRng;
 use rand_seeder::Seeder;
 

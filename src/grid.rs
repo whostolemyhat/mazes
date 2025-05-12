@@ -1,5 +1,4 @@
 use std::{
-    cell::RefCell,
     collections::HashMap,
     fmt::{self, Display, Formatter},
 };
@@ -63,30 +62,6 @@ pub trait Grid {
     fn links_mut(&mut self) -> &mut HashMap<Position, Vec<Position>>;
     fn set_links(&mut self, links: HashMap<Position, Vec<Position>>);
 
-    // pub fn new(width: i32, height: i32) -> Self {
-    // let mut map = Grid::prepare_map(width, height);
-    // Grid::configure_cells(&mut map, width, height);
-    //     let links = HashMap::new();
-    //     Grid {
-    //         map,
-    //         width,
-    //         height,
-    //         links: RefCell::new(links),
-    //     }
-    // }
-
-    // pub fn new_with_djikstra(width: i32, height: i32) -> Self {
-    //     let mut map = Grid::prepare_map(width, height);
-    //     Grid::configure_cells(&mut map, width, height);
-    //     let links = HashMap::new();
-    //     Grid {
-    //         map,
-    //         width,
-    //         height,
-    //         links: RefCell::new(links),
-    //     }
-    // }
-
     fn random_cell(&self) -> Cell {
         let mut rng = rand::rng();
         let y = rng.random_range(0..self.height());
@@ -118,24 +93,6 @@ pub trait Grid {
     }
 }
 
-// impl BaseGrid for Grid {
-//     fn width(&self) -> i32 {
-//         self.width
-//     }
-//     fn height(&self) -> i32 {
-//         self.height
-//     }
-//     fn map(&self) -> &Vec<Cell> {
-//         &self.map
-//     }
-//     fn map_mut(&mut self) -> &mut Vec<Cell> {
-//         &mut self.map
-//     }
-//     fn links(&mut self) -> &mut RefCell<HashMap<Position, Vec<Position>>> {
-//         &mut self.links
-//     }
-// }
-
 impl Svg for StandardGrid {}
 
 impl GridSetup for StandardGrid {}
@@ -164,10 +121,6 @@ impl Display for StandardGrid {
                     } else {
                         left += "|";
                     }
-                    // match east {
-                    // Some(_) => left += " ",
-                    // None => left += "|",
-                    // }
 
                     // south
                     if cell_links.contains(&Position { x, y: y + 1 }) {
@@ -175,20 +128,10 @@ impl Display for StandardGrid {
                     } else {
                         bottom += "---+"
                     }
-                // match south {
-                // Some(_) => bottom += "   +",
-                // None => bottom += "---+",
-                // }
                 } else {
                     left += "|";
                     bottom += "---+"
                 }
-
-                // let south = self.links.get(&Position { x, y: y + 1 });
-                // match south {
-                //     Some(_) => bottom += "   +",
-                //     None => bottom += "---+",
-                // }
             }
             output = output + &format!("{}\n{}\n", &left, &bottom).to_owned();
         }
@@ -203,7 +146,7 @@ mod test {
     use crate::{
         Direction, Position,
         cell::Cell,
-        grid::{Grid, StandardGrid, Svg},
+        grid::{StandardGrid, Svg},
     };
 
     #[test]

@@ -10,12 +10,14 @@ pub fn distances(root: &Position, grid: &dyn Grid) -> HashMap<Position, i32> {
     while frontier.len() > 0 {
         let mut new_frontier = vec![];
 
+        // TODO links are added in row/col order
+        // so iterate over all cells and check
         for pos in frontier {
             // get vec from pos
             if let Some(cell_links) = grid.links().get(&pos) {
                 for link in cell_links {
                     if distances.contains_key(&link) {
-                        break;
+                        continue;
                     }
                     distances.insert(*link, distances[&pos] + 1);
                     new_frontier.push(link);
@@ -24,24 +26,6 @@ pub fn distances(root: &Position, grid: &dyn Grid) -> HashMap<Position, i32> {
         }
         frontier = new_frontier;
     }
-
-    // while frontier.len() > 0 {
-    //     let mut new_frontier = vec![];
-
-    //     for cell in frontier {
-    //         for link in cell.links.iter() {
-    //             if distances.contains_key(&link) {
-    //                 break;
-    //             }
-    //             distances.insert(*link, distances[&cell.position] + 1);
-    //             if let Some(linked_cell) = grid.cell_at(link) {
-    //                 new_frontier.push(linked_cell);
-    //             }
-    //         }
-    //     }
-
-    //     frontier = new_frontier;
-    // }
 
     distances
 }
@@ -67,13 +51,22 @@ mod test {
         let distances = distances(&grid.map[0].position, &grid);
 
         let expected = HashMap::from([
-            (Position { x: 3, y: 0 }, 3),
+            (Position { x: 2, y: 1 }, 7),
+            (Position { x: 0, y: 2 }, 10),
+            (Position { x: 2, y: 3 }, 7),
+            (Position { x: 1, y: 3 }, 8),
             (Position { x: 3, y: 2 }, 5),
+            (Position { x: 2, y: 0 }, 2),
+            (Position { x: 1, y: 0 }, 1),
             (Position { x: 3, y: 3 }, 6),
+            (Position { x: 2, y: 2 }, 6),
+            (Position { x: 1, y: 2 }, 9),
+            (Position { x: 1, y: 1 }, 10),
             (Position { x: 0, y: 0 }, 0),
             (Position { x: 3, y: 1 }, 4),
-            (Position { x: 1, y: 0 }, 1),
-            (Position { x: 2, y: 0 }, 2),
+            (Position { x: 3, y: 0 }, 3),
+            (Position { x: 0, y: 3 }, 9),
+            (Position { x: 0, y: 1 }, 11),
         ]);
         assert_eq!(distances, expected);
     }

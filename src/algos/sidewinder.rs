@@ -7,6 +7,8 @@ use rand::{Rng, seq::IndexedMutRandom};
 
 fn link(links: &mut HashMap<Position, Vec<Position>>, start: &Position, neighbour: &Position) {
     links.entry(*start).or_insert(vec![]).push(*neighbour);
+    // bi-directional
+    links.entry(*neighbour).or_insert(vec![]).push(*start);
 }
 
 pub fn sidewinder(grid: &mut dyn Grid, rng: &mut SmallRng) {
