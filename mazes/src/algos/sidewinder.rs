@@ -11,7 +11,7 @@ fn link(links: &mut HashMap<Position, Vec<Position>>, start: &Position, neighbou
     links.entry(*neighbour).or_insert(vec![]).push(*start);
 }
 
-pub fn sidewinder(grid: &mut dyn Grid, rng: &mut SmallRng) {
+pub fn sidewinder(grid: &mut Box<dyn Grid>, rng: &mut SmallRng) {
     // can't borrow links field inside for loop since Rust doesn't know which field
     // we're mutating
     // so take links here, update in loop, then reassign
@@ -55,13 +55,16 @@ mod test {
     use rand::rngs::SmallRng;
     use rand_seeder::Seeder;
 
-    use crate::{algos::sidewinder::sidewinder, grid::StandardGrid};
+    use crate::{
+        algos::sidewinder::sidewinder,
+        grid::{Grid, StandardGrid},
+    };
 
     #[test]
     fn should_generate_maze() {
         let seed = "abc12345abc";
         let mut rng: SmallRng = Seeder::from(&seed).into_rng();
-        let mut container = StandardGrid::new(4, 4);
+        let mut container: Box<dyn Grid> = Box::new(StandardGrid::new(4, 4));
         sidewinder(&mut container, &mut rng);
 
         assert_eq!(

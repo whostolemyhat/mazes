@@ -1,0 +1,11 @@
+[package]
+name = "mazes_cli"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+clap = { version = "4.5.38", features = ["derive"] }
+mazes = { version = "0.2.0", path = "../mazes" }
+rand = { version = "0.9.0", features = ["small_rng"] }
+rand_seeder = "0.4.0"
+serde = { version = "1.0.219", features = ["serde_derive"] }

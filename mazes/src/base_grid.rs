@@ -1,38 +1,7 @@
 use crate::{Direction, Position, cell::Cell, grid::Grid};
 
-// TODO grid owns links
-// TODO sub-trait?
-// pub trait BaseGrid {
-//     fn width(&self) -> i32;
-//     fn height(&self) -> i32;
-//     fn map(&self) -> &Vec<Cell>;
-//     fn map_mut(&mut self) -> &mut Vec<Cell>;
-//     fn links(&mut self) -> &mut RefCell<HashMap<Position, Vec<Position>>>;
-
-//     fn random_cell(&self) -> Cell {
-//         let mut rng = rand::rng();
-//         let y = rng.random_range(0..self.height());
-//         let x = rng.random_range(0..self.width());
-
-//         self.map()[((y * self.width()) + x) as usize].clone()
-//     }
-
-//     fn cell_at(&mut self, pos: &Position) -> Option<&mut Cell> {
-//         let map = self.map_mut();
-//         map.iter_mut().find(|cell| cell.position == *pos)
-//     }
-
-//     fn size(&self) -> i32 {
-//         self.width() * self.height()
-//     }
-
-//     fn contents_of(&self, _cell: &Cell) -> String {
-//         String::from(" ")
-//     }
-// }
-
-pub trait Svg {
-    fn draw(grid: &dyn Grid, map: &Vec<Cell>, width: i32, height: i32) -> String {
+pub trait Svg: Grid {
+    fn draw(&self, map: &Vec<Cell>, width: i32, height: i32) -> String {
         let wall_colour = "black";
         let cell_size = 16;
         let mut output = String::new();
@@ -58,14 +27,14 @@ pub trait Svg {
             // draw east and south if there is no cell (outside)
             // or if there is no link to that direction
             let east = cell.neighbours.get(&Direction::East);
-            if east.is_none() || (east.is_some() && !grid.is_linked(&cell.position, east.unwrap()))
+            if east.is_none() || (east.is_some() && !self.is_linked(&cell.position, east.unwrap()))
             {
                 output += &Self::svg_line(x2, y1, x2, y2, wall_colour);
             }
 
             let south = cell.neighbours.get(&Direction::South);
             if south.is_none()
-                || (south.is_some() && !grid.is_linked(&cell.position, south.unwrap()))
+                || (south.is_some() && !self.is_linked(&cell.position, south.unwrap()))
             {
                 output += &Self::svg_line(x1, y2, x2, y2, wall_colour);
             }
@@ -122,9 +91,5 @@ pub trait GridSetup {
                     .insert(Direction::East, Position { x: col + 1, y: row });
             }
         }
-    }
-
-    fn contents_of(&self, _cell: &Cell) -> String {
-        String::from(" ")
     }
 }

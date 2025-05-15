@@ -62,6 +62,10 @@ pub trait Grid {
     fn links_mut(&mut self) -> &mut HashMap<Position, Vec<Position>>;
     fn set_links(&mut self, links: HashMap<Position, Vec<Position>>);
 
+    fn contents_of(&self, _cell: &Cell) -> String {
+        String::from(" ")
+    }
+
     fn random_cell(&self) -> Cell {
         let mut rng = rand::rng();
         let y = rng.random_range(0..self.height());
@@ -93,11 +97,7 @@ pub trait Grid {
     }
 }
 
-impl Svg for StandardGrid {}
-
-impl GridSetup for StandardGrid {}
-
-impl Display for StandardGrid {
+impl Display for dyn Grid {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         let mut output: String = "+".to_owned();
         for _ in 0..self.width() {
@@ -139,6 +139,10 @@ impl Display for StandardGrid {
     }
 }
 
+impl Svg for dyn Grid {}
+
+impl GridSetup for StandardGrid {}
+
 #[cfg(test)]
 mod test {
     use std::collections::HashMap;
@@ -146,7 +150,7 @@ mod test {
     use crate::{
         Direction, Position,
         cell::Cell,
-        grid::{StandardGrid, Svg},
+        grid::{Grid, StandardGrid, Svg},
     };
 
     #[test]
@@ -328,7 +332,9 @@ mod test {
 
     #[test]
     fn it_should_display_ascii() {
-        let mut grid = StandardGrid::new(4, 4);
+        let mut grid: Box<dyn Grid> = Box::new(StandardGrid::new(4, 4));
+        let mut links = grid.links().clone();
+
         assert_eq!(
             format!("{}", grid),
             "+---+---+---+---+
@@ -344,19 +350,20 @@ mod test {
         );
 
         // note have to connect earlier cell to later
-        let next_cell_pos = grid.map[1].position;
+        let next_cell_pos = grid.map()[1].position;
 
-        grid.links
-            .entry(grid.map[0].position)
+        links
+            .entry(grid.map()[0].position)
             .or_insert(vec![])
             .push(next_cell_pos);
 
-        let next_cell_pos = grid.map[11].position;
-        grid.links
-            .entry(grid.map[7].position)
+        let next_cell_pos = grid.map()[11].position;
+        links
+            .entry(grid.map()[7].position)
             .or_insert(vec![])
             .push(next_cell_pos);
 
+        grid.set_links(links);
         assert_eq!(
             format!("{}", grid),
             "+---+---+---+---+
@@ -374,8 +381,8 @@ mod test {
 
     #[test]
     fn it_should_draw_svg() {
-        let grid = StandardGrid::new(4, 4);
-        let svg = StandardGrid::draw(&grid, &grid.map, grid.width, grid.height);
+        let grid: Box<dyn Grid> = Box::new(StandardGrid::new(4, 4));
+        let svg = grid.draw(&grid.map(), grid.width(), grid.height());
         assert_eq!(
             "<svg viewBox=\"0 0 64 64\" xmlns=\"http://www.w3.org/2000/svg\"><line x1=\"0\" y1=\"0\" x2=\"16\" y2=\"0\" stroke=\"black\" stroke-linecap=\"square\" /><line x1=\"0\" y1=\"0\" x2=\"0\" y2=\"16\" stroke=\"black\" stroke-linecap=\"square\" /><line x1=\"16\" y1=\"0\" x2=\"16\" y2=\"16\" stroke=\"black\" stroke-linecap=\"square\" /><line x1=\"0\" y1=\"16\" x2=\"16\" y2=\"16\" stroke=\"black\" stroke-linecap=\"square\" /><line x1=\"16\" y1=\"0\" x2=\"32\" y2=\"0\" stroke=\"black\" stroke-linecap=\"square\" /><line x1=\"32\" y1=\"0\" x2=\"32\" y2=\"16\" stroke=\"black\" stroke-linecap=\"square\" /><line x1=\"16\" y1=\"16\" x2=\"32\" y2=\"16\" stroke=\"black\" stroke-linecap=\"square\" /><line x1=\"32\" y1=\"0\" x2=\"48\" y2=\"0\" stroke=\"black\" stroke-linecap=\"square\" /><line x1=\"48\" y1=\"0\" x2=\"48\" y2=\"16\" stroke=\"black\" stroke-linecap=\"square\" /><line x1=\"32\" y1=\"16\" x2=\"48\" y2=\"16\" stroke=\"black\" stroke-linecap=\"square\" /><line x1=\"48\" y1=\"0\" x2=\"64\" y2=\"0\" stroke=\"black\" stroke-linecap=\"square\" /><line x1=\"64\" y1=\"0\" x2=\"64\" y2=\"16\" stroke=\"black\" stroke-linecap=\"square\" /><line x1=\"48\" y1=\"16\" x2=\"64\" y2=\"16\" stroke=\"black\" stroke-linecap=\"square\" /><line x1=\"0\" y1=\"16\" x2=\"0\" y2=\"32\" stroke=\"black\" stroke-linecap=\"square\" /><line x1=\"16\" y1=\"16\" x2=\"16\" y2=\"32\" stroke=\"black\" stroke-linecap=\"square\" /><line x1=\"0\" y1=\"32\" x2=\"16\" y2=\"32\" stroke=\"black\" stroke-linecap=\"square\" /><line x1=\"32\" y1=\"16\" x2=\"32\" y2=\"32\" stroke=\"black\" stroke-linecap=\"square\" /><line x1=\"16\" y1=\"32\" x2=\"32\" y2=\"32\" stroke=\"black\" stroke-linecap=\"square\" /><line x1=\"48\" y1=\"16\" x2=\"48\" y2=\"32\" stroke=\"black\" stroke-linecap=\"square\" /><line x1=\"32\" y1=\"32\" x2=\"48\" y2=\"32\" stroke=\"black\" stroke-linecap=\"square\" /><line x1=\"64\" y1=\"16\" x2=\"64\" y2=\"32\" stroke=\"black\" stroke-linecap=\"square\" /><line x1=\"48\" y1=\"32\" x2=\"64\" y2=\"32\" stroke=\"black\" stroke-linecap=\"square\" /><line x1=\"0\" y1=\"32\" x2=\"0\" y2=\"48\" stroke=\"black\" stroke-linecap=\"square\" /><line x1=\"16\" y1=\"32\" x2=\"16\" y2=\"48\" stroke=\"black\" stroke-linecap=\"square\" /><line x1=\"0\" y1=\"48\" x2=\"16\" y2=\"48\" stroke=\"black\" stroke-linecap=\"square\" /><line x1=\"32\" y1=\"32\" x2=\"32\" y2=\"48\" stroke=\"black\" stroke-linecap=\"square\" /><line x1=\"16\" y1=\"48\" x2=\"32\" y2=\"48\" stroke=\"black\" stroke-linecap=\"square\" /><line x1=\"48\" y1=\"32\" x2=\"48\" y2=\"48\" stroke=\"black\" stroke-linecap=\"square\" /><line x1=\"32\" y1=\"48\" x2=\"48\" y2=\"48\" stroke=\"black\" stroke-linecap=\"square\" /><line x1=\"64\" y1=\"32\" x2=\"64\" y2=\"48\" stroke=\"black\" stroke-linecap=\"square\" /><line x1=\"48\" y1=\"48\" x2=\"64\" y2=\"48\" stroke=\"black\" stroke-linecap=\"square\" /><line x1=\"0\" y1=\"48\" x2=\"0\" y2=\"64\" stroke=\"black\" stroke-linecap=\"square\" /><line x1=\"16\" y1=\"48\" x2=\"16\" y2=\"64\" stroke=\"black\" stroke-linecap=\"square\" /><line x1=\"0\" y1=\"64\" x2=\"16\" y2=\"64\" stroke=\"black\" stroke-linecap=\"square\" /><line x1=\"32\" y1=\"48\" x2=\"32\" y2=\"64\" stroke=\"black\" stroke-linecap=\"square\" /><line x1=\"16\" y1=\"64\" x2=\"32\" y2=\"64\" stroke=\"black\" stroke-linecap=\"square\" /><line x1=\"48\" y1=\"48\" x2=\"48\" y2=\"64\" stroke=\"black\" stroke-linecap=\"square\" /><line x1=\"32\" y1=\"64\" x2=\"48\" y2=\"64\" stroke=\"black\" stroke-linecap=\"square\" /><line x1=\"64\" y1=\"48\" x2=\"64\" y2=\"64\" stroke=\"black\" stroke-linecap=\"square\" /><line x1=\"48\" y1=\"64\" x2=\"64\" y2=\"64\" stroke=\"black\" stroke-linecap=\"square\" /></svg>",
             svg

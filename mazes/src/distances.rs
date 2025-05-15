@@ -1,8 +1,11 @@
 use std::{collections::HashMap, vec};
 
-use crate::{Position, grid::Grid};
+use crate::Position;
 
-pub fn distances(root: &Position, grid: &dyn Grid) -> HashMap<Position, i32> {
+pub fn distances(
+    root: &Position,
+    links: &HashMap<Position, Vec<Position>>,
+) -> HashMap<Position, i32> {
     let mut distances = HashMap::new();
     distances.insert(*root, 0);
     let mut frontier = vec![root];
@@ -14,7 +17,7 @@ pub fn distances(root: &Position, grid: &dyn Grid) -> HashMap<Position, i32> {
         // so iterate over all cells and check
         for pos in frontier {
             // get vec from pos
-            if let Some(cell_links) = grid.links().get(&pos) {
+            if let Some(cell_links) = links.get(&pos) {
                 for link in cell_links {
                     if distances.contains_key(&link) {
                         continue;
@@ -37,18 +40,22 @@ mod test {
     use rand::rngs::SmallRng;
     use rand_seeder::Seeder;
 
-    use crate::{Position, algos::sidewinder::sidewinder, grid::StandardGrid};
+    use crate::{
+        Position,
+        algos::sidewinder::sidewinder,
+        grid::{Grid, StandardGrid},
+    };
 
     use super::distances;
 
     #[test]
     fn it_should_find_distances() {
-        let mut grid = StandardGrid::new(4, 4);
+        let mut grid: Box<dyn Grid> = Box::new(StandardGrid::new(4, 4));
         let seed = "abc12345abc";
         let mut rng: SmallRng = Seeder::from(&seed).into_rng();
         sidewinder(&mut grid, &mut rng);
 
-        let distances = distances(&grid.map[0].position, &grid);
+        let distances = distances(&grid.map()[0].position, &grid.links());
 
         let expected = HashMap::from([
             (Position { x: 2, y: 1 }, 7),
