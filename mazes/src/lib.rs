@@ -10,14 +10,14 @@
 pub mod algos;
 pub mod base_grid;
 mod cell;
-mod distances;
+pub mod distances;
 pub mod djikstra;
 pub mod grid;
 
 #[derive(Debug, Eq, Hash, PartialEq, Clone, Copy)]
 pub struct Position {
-    x: i32,
-    y: i32,
+    pub x: i32,
+    pub y: i32,
 }
 
 #[derive(Debug, Eq, PartialEq, Hash, Clone)]

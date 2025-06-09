@@ -14,6 +14,7 @@ pub struct DjikstraGrid {
     pub width: i32,
     pub height: i32,
     pub links: HashMap<Position, Vec<Position>>,
+    distances: HashMap<Position, i32>,
 }
 
 impl DjikstraGrid {
@@ -26,6 +27,7 @@ impl DjikstraGrid {
             width,
             height,
             links,
+            distances: HashMap::new(),
         }
     }
 }
@@ -47,13 +49,23 @@ impl Grid for DjikstraGrid {
         &mut self.links
     }
     fn set_links(&mut self, links: HashMap<Position, Vec<Position>>) {
+        let distances = distances(&self.map[0].position, &self.links());
+        self.distances = distances;
         self.links = links;
     }
 
-    fn contents_of(&self, cell: &Cell) -> String {
-        let distances = distances(&self.map[0].position, &self.links());
+    fn distances(&self) -> HashMap<Position, i32> {
+        self.distances.clone()
+    }
 
-        match distances.get(&cell.position) {
+    fn set_distances(&mut self, distances: HashMap<Position, i32>) {
+        self.distances = distances;
+    }
+
+    fn contents_of(&self, cell: &Cell) -> String {
+        dbg!(&cell.position, self.distances.get(&cell.position));
+
+        match self.distances.get(&cell.position) {
             Some(num) => match std::char::from_digit(*num as u32, 36) {
                 Some(ch) => ch.to_string(),
                 None => String::from(" "),

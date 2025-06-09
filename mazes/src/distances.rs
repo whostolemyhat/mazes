@@ -1,6 +1,6 @@
 use std::{collections::HashMap, vec};
 
-use crate::Position;
+use crate::{Position, grid::Grid};
 
 pub fn distances(
     root: &Position,
@@ -31,6 +31,39 @@ pub fn distances(
     }
 
     distances
+}
+
+pub fn path_to(goal: &Position, grid: &Box<dyn Grid>) -> HashMap<Position, i32> {
+    let mut current = goal;
+    let root = grid.map()[0].position;
+
+    // from goal
+    // check links
+    // if links < goal distance
+    // change current
+
+    let calculated = distances(&root, grid.links());
+    let mut breadcrumbs: HashMap<Position, i32> = HashMap::new();
+
+    if let Some(goal_distance) = calculated.get(goal) {
+        breadcrumbs.insert(*goal, *goal_distance);
+    }
+
+    while *current != root {
+        if let Some(neighbours) = grid.links().get(current) {
+            neighbours.iter().for_each(|neighbour| {
+                let neighbour_distance = calculated.get(neighbour).unwrap();
+                let current_distance = calculated.get(current).unwrap();
+
+                if neighbour_distance < current_distance {
+                    breadcrumbs.insert(*neighbour, *neighbour_distance);
+                    current = neighbour;
+                }
+            });
+        }
+    }
+
+    breadcrumbs
 }
 
 #[cfg(test)]

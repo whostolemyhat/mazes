@@ -17,6 +17,7 @@ pub struct StandardGrid {
     pub width: i32,
     pub height: i32,
     pub links: HashMap<Position, Vec<Position>>,
+    pub distances: HashMap<Position, i32>,
 }
 
 impl StandardGrid {
@@ -24,11 +25,13 @@ impl StandardGrid {
         let mut map = Self::prepare_map(width, height);
         Self::configure_cells(&mut map, width, height);
         let links = HashMap::new();
+
         StandardGrid {
             map,
             width,
             height,
             links,
+            distances: HashMap::new(),
         }
     }
 }
@@ -52,6 +55,13 @@ impl Grid for StandardGrid {
     fn set_links(&mut self, links: HashMap<Position, Vec<Position>>) {
         self.links = links;
     }
+    fn distances(&self) -> HashMap<Position, i32> {
+        self.distances.clone()
+    }
+
+    fn set_distances(&mut self, distances: HashMap<Position, i32>) {
+        self.distances = distances;
+    }
 }
 
 pub trait Grid {
@@ -61,6 +71,8 @@ pub trait Grid {
     fn links(&self) -> &HashMap<Position, Vec<Position>>;
     fn links_mut(&mut self) -> &mut HashMap<Position, Vec<Position>>;
     fn set_links(&mut self, links: HashMap<Position, Vec<Position>>);
+    fn distances(&self) -> HashMap<Position, i32>;
+    fn set_distances(&mut self, distances: HashMap<Position, i32>);
 
     fn contents_of(&self, _cell: &Cell) -> String {
         String::from(" ")
@@ -162,6 +174,7 @@ mod test {
                 links: HashMap::new(),
                 width: 4,
                 height: 4,
+                distances: HashMap::new(),
                 map: vec![
                     Cell {
                         position: Position { x: 0, y: 0 },
