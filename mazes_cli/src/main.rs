@@ -25,7 +25,7 @@ enum Algos {
     Binary,
 }
 
-#[derive(clap::ValueEnum, Clone, Default, Debug, Serialize)]
+#[derive(clap::ValueEnum, Clone, Default, Debug, Serialize, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 enum GridType {
     #[default]
@@ -71,10 +71,12 @@ fn main() -> Result<(), io::Error> {
         Algos::Binary => binary_tree(&mut grid, &mut rng),
     };
 
-    // find a path and update grid distances
-    // only works for djikstra
-    let path = path_to(&Position { x: 5, y: 1 }, &grid);
-    grid.set_distances(path);
+    if gen_args.grid == GridType::Djikstra {
+        // find a path and update grid distances
+        // only works for djikstra
+        let path = path_to(&Position { x: 5, y: 1 }, &grid);
+        grid.set_distances(path);
+    }
     println!("{}", grid);
 
     let output = grid.draw(&grid.map(), grid.width(), grid.height());
